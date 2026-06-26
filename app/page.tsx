@@ -20,10 +20,7 @@ export default function HomePage() {
   useEffect(() => {
     async function load() {
       const [{ data: framesData }, { data: filesData }] = await Promise.all([
-        supabase
-          .from('frames')
-          .select('*, page:pages(name, file:files(name, figma_file_key))')
-          .order('updated_at', { ascending: false }),
+        supabase.from('frames').select('*, page:pages(name, file:files(name, figma_file_key))').order('updated_at', { ascending: false }),
         supabase.from('files').select('*').order('last_synced', { ascending: false }),
       ])
       setFrames((framesData as FigmaFrame[]) ?? [])
@@ -46,7 +43,7 @@ export default function HomePage() {
       if (!q) return true
       return (
         f.name.toLowerCase().includes(q) ||
-        f.components.some((c) => c.toLowerCase().includes(q)) ||
+        f.components.some((c) => (typeof c === 'string' ? c : c.name).toLowerCase().includes(q)) ||
         f.layers.some((l) => l.toLowerCase().includes(q))
       )
     })
@@ -67,10 +64,7 @@ export default function HomePage() {
           <div className="flex-1 max-w-xl">
             <SearchInput value={search} onChange={setSearch} />
           </div>
-          <button
-            onClick={() => setShowImport(!showImport)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
+          <button onClick={() => setShowImport(!showImport)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -86,45 +80,28 @@ export default function HomePage() {
           </div>
         )}
       </header>
-
       <div className="max-w-screen-2xl mx-auto px-6 py-6 flex gap-8">
         <FilterSidebar categories={categories} selectedCategory={category} onCategoryChange={setCategory} />
         <main className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-4 text-sm text-gray-500">
               <span>{filtered.length} frame{filtered.length !== 1 ? 's' : ''}</span>
-              {files.length > 0 && (
-                <>
-                  <span className="text-gray-200">·</span>
-                  <span>{files.length} file{files.length !== 1 ? 's' : ''} indexed</span>
-                </>
-              )}
+              {files.length > 0 && <><span className="text-gray-200">·</span><span>{files.length} file{files.length !== 1 ? 's' : ''} indexed</span></>}
             </div>
             {files.length > 0 && (
               <div className="flex gap-2">
                 {files.slice(0, 3).map((file) => (
-                  <Link
-                    key={file.id}
-                    href={`/files/${file.id}?key=${file.figma_file_key}`}
-                    className="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors truncate max-w-[160px]"
-                    title={file.name}
-                  >
-                    {file.name}
-                  </Link>
+                  <Link key={file.id} href={`/files/${file.id}?key=${file.figma_file_key}`} className="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors truncate max-w-[160px]" title={file.name}>{file.name}</Link>
                 ))}
               </div>
             )}
           </div>
-
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse">
                   <div className="aspect-[4/3] bg-gray-100" />
-                  <div className="p-3 space-y-2">
-                    <div className="h-3 bg-gray-100 rounded w-3/4" />
-                    <div className="h-2.5 bg-gray-100 rounded w-1/2" />
-                  </div>
+                  <div className="p-3 space-y-2"><div className="h-3 bg-gray-100 rounded w-3/4" /><div className="h-2.5 bg-gray-100 rounded w-1/2" /></div>
                 </div>
               ))}
             </div>
@@ -136,15 +113,8 @@ export default function HomePage() {
                 </svg>
               </div>
               <h2 className="text-gray-900 font-semibold text-lg mb-1">No frames indexed yet</h2>
-              <p className="text-gray-500 text-sm mb-6 max-w-xs">
-                Import a Figma file to start building your design library
-              </p>
-              <button
-                onClick={() => setShowImport(true)}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Import your first file
-              </button>
+              <p className="text-gray-500 text-sm mb-6 max-w-xs">Import a Figma file to start building your design library</p>
+              <button onClick={() => setShowImport(true)} className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Import your first file</button>
             </div>
           ) : (
             <FrameGrid frames={filtered} />
